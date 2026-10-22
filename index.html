@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Музыкальный плеер</title>
+  <!-- Пути относительные (без ведущего слэша), чтобы работало в подпапке GitHub Pages -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Набор SVG-иконок (спрайт). Используются через <use href="#id"> -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></symbol>
+    <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></symbol>
+    <symbol id="i-volume" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="M16.5 12A4.5 4.5 0 0 0 14 7.97v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51A8.8 8.8 0 0 0 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06a8.99 8.99 0 0 0 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M12 3l9 8h-3v9h-5v-6h-2v6H6v-9H3z"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></symbol>
+    <symbol id="i-library" viewBox="0 0 24 24"><path d="M4 4h2v16H4zm5 0h2v16H9zm5.5.5l1.9-.5 4 15-1.9.5z"/></symbol>
+    <symbol id="i-note" viewBox="0 0 24 24"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></symbol>
+  </svg>
+
+  <div class="app">
+
+    <!-- ЛЕВАЯ КОЛОНКА: навигация и медиатека -->
+    <aside class="sidebar">
+      <nav class="panel nav">
+        <a class="nav-item active" href="#"><svg class="icon"><use href="#i-home"/></svg>Главная</a>
+        <a class="nav-item" href="#"><svg class="icon"><use href="#i-search"/></svg>Поиск</a>
+      </nav>
+
+      <section class="panel library">
+        <h2 class="library-title"><svg class="icon"><use href="#i-library"/></svg>Моя медиатека</h2>
+        <!-- Список плейлистов рендерится из app.js -->
+        <ul id="playlists" class="playlists"></ul>
+      </section>
+    </aside>
+
+    <!-- ЦЕНТРАЛЬНАЯ КОЛОНКА: станции и карточки треков -->
+    <main class="panel main">
+      <header class="main-header">
+        <h1 id="greeting">Добрый день</h1>
+      </header>
+
+      <section class="section">
+        <h2 class="section-title">Рекомендуемые станции</h2>
+        <div id="stations" class="stations"></div>
+      </section>
+
+      <section class="section">
+        <h2 id="tracks-title" class="section-title">Все треки</h2>
+        <div id="tracks" class="cards"></div>
+        <p id="status" class="status"></p>
+      </section>
+    </main>
+
+    <!-- ПРАВАЯ КОЛОНКА: «Сейчас играет» -->
+    <aside class="panel now-playing">
+      <h2 class="np-heading">Сейчас играет</h2>
+      <div class="np-body">
+        <div id="np-cover" class="cover np-cover"><img alt=""></div>
+        <div class="np-info">
+          <div id="np-title" class="np-title">Выберите трек</div>
+          <div id="np-artist" class="np-artist">—</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- НИЖНИЙ ПЛЕЕР -->
+    <footer class="player">
+      <!-- Текущий трек (слева) -->
+      <div class="player-track">
+        <div id="pl-cover" class="cover pl-cover"><img alt=""></div>
+        <div class="pl-info">
+          <div id="pl-title" class="pl-title">—</div>
+          <div id="pl-artist" class="pl-artist"></div>
+        </div>
+      </div>
+
+      <!-- Управление (по центру) -->
+      <div class="player-center">
+        <div class="controls">
+          <button id="btn-shuffle" class="ctrl" title="Перемешать"><svg class="icon"><use href="#i-shuffle"/></svg></button>
+          <button id="btn-prev" class="ctrl" title="Предыдущий"><svg class="icon"><use href="#i-prev"/></svg></button>
+          <button id="btn-play" class="ctrl play" title="Играть"><svg class="icon"><use id="play-icon" href="#i-play"/></svg></button>
+          <button id="btn-next" class="ctrl" title="Следующий"><svg class="icon"><use href="#i-next"/></svg></button>
+          <button id="btn-repeat" class="ctrl" title="Повтор"><svg class="icon"><use href="#i-repeat"/></svg></button>
+        </div>
+        <div class="progress-row">
+          <span id="time-current" class="time">0:00</span>
+          <div id="progress" class="slider" role="slider" aria-label="Перемотка">
+            <div class="slider-track"><div id="progress-fill" class="slider-fill"></div></div>
+          </div>
+          <span id="time-total" class="time">0:00</span>
+        </div>
+      </div>
+
+      <!-- Громкость (справа) -->
+      <div class="player-volume">
+        <button id="btn-mute" class="ctrl" title="Без звука"><svg class="icon"><use id="vol-icon" href="#i-volume"/></svg></button>
+        <div id="volume" class="slider volume-slider" role="slider" aria-label="Громкость">
+          <div class="slider-track"><div id="volume-fill" class="slider-fill"></div></div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Единственный аудио-элемент, которым управляет app.js -->
+  <audio id="audio" preload="metadata"></audio>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "title": "Первый трек",
+    "artist": "Исполнитель A",
+    "src": "music/song1.mp3",
+    "cover": "covers/cover1.jpg"
+  },
+  {
+    "id": 2,
+    "title": "Второй трек",
+    "artist": "Исполнитель A",
+    "src": "music/song2.mp3",
+    "cover": "covers/cover2.jpg"
+  },
+  {
+    "id": 3,
+    "title": "Третий трек",
+    "artist": "Исполнитель B",
+    "src": "music/song3.mp3",
+    "cover": "covers/cover3.jpg"
+  },
+  {
+    "id": 4,
+    "title": "Четвёртый трек",
+    "artist": "Исполнитель B",
+    "src": "music/song4.mp3",
+    "cover": "covers/cover4.jpg"
+  },
+  {
+    "id": 5,
+    "title": "Пятый трек",
+    "artist": "Исполнитель C",
+    "src": "music/song5.mp3",
+    "cover": "covers/cover5.jpg"
+  },
+  {
+    "id": 6,
+    "title": "Шестой трек",
+    "artist": "Исполнитель C",
+    "src": "music/song6.mp3",
+    "cover": "covers/cover6.jpg"
+  }
+]

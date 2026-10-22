@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Clone UI</title>
+    <style>
+        /* --- Базовые настройки --- */
+        :root {
+            --bg-color: #000000;
+            --panel-bg: #121212;
+            --panel-hover: #1a1a1a;
+            --text-main: #ffffff;
+            --text-muted: #a7a7a7;
+            --accent: #1ed760;
+            --player-bg: #000000;
+            --border-color: #282828;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Circular', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- Главный контейнер (3 колонки) --- */
+        .app-container {
+            display: flex;
+            flex: 1;
+            gap: 8px;
+            padding: 8px;
+            height: calc(100vh - 90px); /* Место под нижний плеер */
+        }
+
+        /* --- Общие стили для панелей --- */
+        .panel {
+            background-color: var(--panel-bg);
+            border-radius: 8px;
+            overflow-y: auto;
+        }
+
+        .panel::-webkit-scrollbar {
+            width: 8px;
+        }
+        .panel::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+        }
+
+        /* --- Левая колонка (Медиатека) --- */
+        .sidebar-left {
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .library-header {
+            background-color: var(--panel-bg);
+            border-radius: 8px;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .library-header h2 {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .library-header button {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .library-content {
+            background-color: var(--panel-bg);
+            border-radius: 8px;
+            flex: 1;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Баннер импорта */
+        .import-banner {
+            background: linear-gradient(135deg, #450af5, #8e8ee5);
+            border-radius: 8px;
+            padding: 16px;
+            position: relative;
+        }
+        .import-banner h3 {
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        .import-banner p {
+            font-size: 12px;
+            margin-bottom: 16px;
+            color: #e0e0e0;
+        }
+        .import-banner button {
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .import-banner .close-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: transparent;
+            color: #fff;
+            padding: 0;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        /* Список плейлистов */
+        .playlist-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .playlist-item:hover {
+            background: var(--panel-hover);
+        }
+        .playlist-item img {
+            width: 48px;
+            height: 48px;
+            border-radius: 4px;
+            object-fit: cover;
+        }
+        .playlist-info h4 {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .playlist-info p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* --- Центральная колонка (Контент) --- */
+        .main-content {
+            flex: 1;
+            background: linear-gradient(180deg, #1f1f1f 0%, var(--panel-bg) 100%);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Верхняя навигация */
+        .top-nav {
+            display: flex;
+            align-items: center;
+            padding: 16px 24px;
+            gap: 16px;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        .nav-buttons button {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.7);
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .search-bar {
+            flex: 1;
+            max-width: 400px;
+            position: relative;
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 12px 40px;
+            border-radius: 20px;
+            border: none;
+            background: #242424;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+        }
+        .search-bar svg {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            fill: #a7a7a7;
+            width: 16px;
+        }
+        .user-actions {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .user-actions .profile-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #333;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        /* Фильтры */
+        .filters {
+            padding: 0 24px 16px;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+        }
+        .filters::-webkit-scrollbar { display: none; }
+        .filter-btn {
+            background: #242424;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .filter-btn.active {
+            background: #fff;
+            color: #000;
+        }
+
+        /* Быстрые плитки (подборки) */
+        .quick-tiles {
+            padding: 0 24px 24px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+        .tile {
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: background 0.3s;
+            height: 64px;
+        }
+        .tile:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        .tile img {
+            width: 64px;
+            height: 64px;
+            object-fit: cover;
+        }
+        .tile span {
+            font-size: 14px;
+            font-weight: 700;
+            padding-right: 12px;
+        }
+
+        /* Секции с карточками */
+        .section {
+            padding: 0 24px 24px;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .section-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+        .section-header a {
+            color: var(--text-muted);
+            font-size: 14px;
+            text-decoration: none;
+            font-weight: 700;
+        }
+        .section-header a:hover {
+            text-decoration: underline;
+        }
+
+        /* Сетка карточек */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 24px;
+        }
+        .card {
+            background: #181818;
+            padding: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .card:hover {
+            background: #282828;
+        }
+        .card-img-wrapper {
+            position: relative;
+            margin-bottom: 16px;
+        }
+        .card-img-wrapper img {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            border-radius: 4px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        .card h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .card p {
+            font-size: 14px;
+            color: var(--text-muted);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* --- Правая колонка (Очередь) --- */
+        .sidebar-right {
+            width: 280px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--panel-bg);
+            border-radius: 8px;
+        }
+        .right-header {
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .right-header h3 {
+            font-size: 16px;
+        }
+        .now-playing-img {
+            padding: 16px;
+            position: relative;
+        }
+        .now-playing-img img {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        .now-playing-info {
+            padding: 0 16px 16px;
+        }
+        .now-playing-info h2 {
+            font-size: 22px;
+            margin-bottom: 4px;
+        }
+        .now-playing-info p {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+        .queue-section {
+            padding: 16px;
+            border-top: 1px solid var(--border-color);
+            flex: 1;
+            overflow-y: auto;
+        }
+        .queue-section h4 {
+            font-size: 14px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .queue-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+        }
+        .queue-item img {
+            width: 40px;
+            height: 40px;
+            border-radius: 4px;
+            background: #282828;
+        }
+        .queue-info h5 {
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+        .queue-info p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* --- Нижний плеер --- */
+        .player {
+            height: 90px;
+            background-color: var(--player-bg);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            z-index: 100;
+        }
+
+        .player-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            width: 30%;
+        }
+        .player-left img {
+            width: 56px;
+            height: 56px;
+            border-radius: 4px;
+        }
+        .track-info h4 {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .track-info p {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .player-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 40%;
+            gap: 8px;
+        }
+        .player-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .player-controls button {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .player-controls button:hover {
+            color: #fff;
+        }
+        .play-btn {
+            width: 32px;
+            height: 32px;
+            background: #fff !important;
+            border-radius: 50%;
+            color: #000 !important;
+        }
+        .progress-bar-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .progress-bar {
+            flex: 1;
+            height: 4px;
+            background: #4d4d4d;
+            border-radius: 2px;
+            position: relative;
+        }
+        .progress-fill {
+            width: 30%;
+            height: 100%;
+            background: #fff;
+            border-radius: 2px;
+        }
+
+        .player-right {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 16px;
+            width: 30%;
+            color: var(--text-muted);
+        }
+        .volume-bar {
+            width: 100px;
+            height: 4px;
+            background: #4d4d4d;
+            border-radius: 2px;
+            position: relative;
+        }
+        .volume-fill {
+            width: 70%;
+            height: 100%;
+            background: #fff;
+            border-radius: 2px;
+        }
+
+        /* Иконки (упрощенные SVG) */
+        .icon { width: 16px; height: 16px; fill: currentColor; }
+        .icon-lg { width: 20px; height: 20px; fill: currentColor; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- ЛЕВАЯ КОЛОНКА -->
+        <aside class="sidebar-left">
+            <div class="library-header">
+                <h2>Моя медиатека</h2>
+                <button>
+                    <svg class="icon" viewBox="0 0 16 16"><path d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM0 8a8 8 0 1116 0A8 8 0 010 8z"/><path d="M8 4.5a.5.5 0 01.5.5v2.5H11a.5.5 0 010 1H8.5V11a.5.5 0 01-1 0V8.5H5a.5.5 0 010-1h2.5V5a.5.5 0 01.5-.5z"/></svg>
+                    Создать
+                </button>
+            </div>
+            
+            <div class="library-content">
+                <div class="import-banner">
+                    <button class="close-btn">×</button>
+                    <h3>Импортируй музыку из других приложений</h3>
+                    <p>Слушай свои плейлисты, треки и исполнителей.</p>
+                    <button>Импортировать</button>
+                </div>
+
+                <div class="playlist-item">
+                    <img src="https://via.placeholder.com/48/333/fff?text=♥" alt="Liked">
+                    <div class="playlist-info">
+                        <h4>Любимые треки</h4>
+                        <p>♥ Плейлист • SLAVA</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ЦЕНТРАЛЬНАЯ КОЛОНКА -->
+        <main class="main-content">
+            <div class="top-nav">
+                <div class="nav-buttons">
+                    <button>←</button>
+                    <button>→</button>
+                </div>
+                <div class="search-bar">
+                    <svg viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 10-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 001.415-1.414l-3.85-3.85a1.007 1.007 0 00-.115-.1zM12 6.5a5.5 5.5 0 11-11 0 5.5 5.5 0 0111 0z"/></svg>
+                    <input type="text" placeholder="Что хочешь включить?">
+                </div>
+                <div class="user-actions">
+                    <button class="profile-btn">3</button>
+                </div>
+            </div>
+
+            <div class="filters">
+                <button class="filter-btn active">Все</button>
+                <button class="filter-btn">Музыка</button>
+                <button class="filter-btn">Подкасты</button>
+                <button class="filter-btn">Аудиокниги</button>
+            </div>
+
+            <div class="quick-tiles">
+                <div class="tile">
+                    <img src="https://via.placeholder.com/64/333/fff?text=J2" alt="Jackboys">
+                    <span>JACKBOYS 2</span>
+                </div>
+                <div class="tile">
+                    <img src="https://via.placeholder.com/64/333/fff?text=U" alt="Utopia">
+                    <span>UTOPIA</span>
+                </div>
+                <div class="tile">
+                    <img src="https://via.placeholder.com/64/333/fff?text=H&V" alt="Heroes">
+                    <span>HEROES & VILLAINS</span>
+                </div>
+                <div class="tile">
+                    <img src="https://via.placeholder.com/64/333/fff?text=TS" alt="Travis">
+                    <span>Travis Scott</span>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <h2>Рекомендуемые станции</h2>
+                    <a href="#">Показать все</a>
+                </div>
+                <div class="card-grid">
+                    <!-- Карточка 1 -->
+                    <div class="card">
+                        <div class="card-img-wrapper">
+                            <img src="https://via.placeholder.com/200/f9a825/000?text=FEIN" alt="FEIN">
+                        </div>
+                        <h3>FEIN (feat. Playboi Carti)</h3>
+                        <p>Travis Scott, Kendrick Lamar, Playboi Carti...</p>
+                    </div>
+                    <!-- Карточка 2 -->
+                    <div class="card">
+                        <div class="card-img-wrapper">
+                            <img src="https://via.placeholder.com/200/ff7043/000?text=Metro" alt="Metro Boomin">
+                        </div>
+                        <h3>Metro Boomin</h3>
+                        <p>Future, 21 Savage, A$AP Rocky и другие</p>
+                    </div>
+                    <!-- Карточка 3 -->
+                    <div class="card">
+                        <div class="card-img-wrapper">
+                            <img src="https://via.placeholder.com/200/ff8a65/000?text=Spider" alt="Metro Spider">
+                        </div>
+                        <h3>Metro Spider (with Young Thug)</h3>
+                        <p>Metro Boomin, Young Thug, Young Stoner...</p>
+                    </div>
+                    <!-- Карточка 4 -->
+                    <div class="card">
+                        <div class="card-img-wrapper">
+                            <img src="https://via.placeholder.com/200/ff5252/000?text=TURBO" alt="TURBO X REMIX">
+                        </div>
+                        <h3>TURBO X REMIX</h3>
+                        <p>Banfiks, Akhmedov, Dear Aaron... и другие</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <h2>Похоже на: JACKBOYS</h2>
+                    <a href="#">Показать все</a>
+                </div>
+                <div class="card-grid">
+                     <div class="card">
+                        <div class="card-img-wrapper">
+                            <img src="https://via.placeholder.com/200/333/fff?text=JB" alt="JACKBOYS">
+                        </div>
+                        <h3>JACKBOYS</h3>
+                        <p>Sheck Wes, Baby</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-img-wrapper">
+                            <img src="https://via.placeholder.com/200/b71c1c/fff?text=Fun" alt="So Much Fun">
+                        </div>
+                        <h3>So Much Fun</h3>
+                        <p>Young Thug</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- ПРАВАЯ КОЛОНКА -->
+        <aside class="sidebar-right">
+            <div class="right-header">
+                <h3>UTOPIA</h3>
+            </div>
+            <div class="now-playing-img">
+                <img src="https://via.placeholder.com/280/333/fff?text=Travis+Scott" alt="Utopia">
+            </div>
+            <div class="now-playing-info">
+                <h2>(feat. The Weeknd & Swae Lee)</h2>
+                <p>Travis Scott, The Weeknd, Swae Lee</p>
+            </div>
+            <div class="queue-section">
+                <h4>Далее ... <span>Показать очередь</span></h4>
+                <div class="queue-item">
+                    <img src="https://via.placeholder.com/40/333/fff?text=♪" alt="Track">
+                    <div class="queue-info">
+                        <h5>PARASAIL (fe...</h5>
+                        <p>Travis Scott, Yun...</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- НИЖНИЙ ПЛЕЕР -->
+    <footer class="player">
+        <div class="player-left">
+            <img src="https://via.placeholder.com/56/333/fff?text=Circus" alt="Album Art">
+            <div class="track-info">
+                <h4>CIRCUS MAXIMUS (feat. The Weeknd & Swae Lee)</h4>
+                <p>Travis Scott, The Weeknd, Swae Lee</p>
+            </div>
+            <button style="background:transparent; border:none; color:#fff; cursor:pointer; font-size:20px;">+</button>
+        </div>
+        
+        <div class="player-center">
+            <div class="player-controls">
+                <button>
+                    <svg class="icon-lg" viewBox="0 0 16 16"><path d="M13.151.922a.75.75 0 10-1.06 1.06L13.109 3H11.16a3.75 3.75 0 00-2.873 1.34l-6.173 7.356A2.25 2.25 0 01.39 12.5H0V14h.391a3.75 3.75 0 002.873-1.34l6.173-7.356a2.25 2.25 0 011.724-.804h1.947l-1.017 1.018a.75.75 0 001.06 1.06L15.98 3.75 13.15.922zM.391 3.5H0V2h.391c1.109 0 2.16.49 2.873 1.34L4.89 5.277l-.979 1.167-1.796-2.14A2.25 2.25 0 00.39 3.5z"/><path d="M7.5 10.723l.98-1.167.957 1.14a2.25 2.25 0 001.724.804h1.947l-1.017-1.018a.75.75 0 111.06-1.06l2.829 2.828-2.829 2.828a.75.75 0 11-1.06-1.06L13.109 13H11.16a3.75 3.75 0 01-2.873-1.34l-.787-.938z"/></svg>
+                </button>
+                <button>
+                    <svg class="icon-lg" viewBox="0 0 16 16"><path d="M3.3 1a.7.7 0 01.7.7v5.15l9.95-5.744a.7.7 0 011.05.606v12.575a.7.7 0 01-1.05.607L4 9.149V14.3a.7.7 0 01-.7.7H1.7a.7.7 0 01-.7-.7V1.7a.7.7 0 01.7-.7h1.6z"/></svg>
+                </button>
+                <button class="play-btn">
+                    <svg class="icon" viewBox="0 0 16 16" style="fill: #000;"><path d="M3 1.713a.7.7 0 011.05-.607l10.89 6.288a.7.7 0 010 1.212L4.05 14.894A.7.7 0 013 14.288V1.713z"/></svg>
+                </button>
+                <button>
+                    <svg class="icon-lg" viewBox="0 0 16 16"><path d="M12.7 1a.7.7 0 00-.7.7v5.15L2.05 1.107A.7.7 0 001 1.712v12.575a.7.7 0 001.05.607L12 9.149V14.3a.7.7 0 00.7.7h1.6a.7.7 0 00.7-.7V1.7a.7.7 0 00-.7-.7h-1.6z"/></svg>
+                </button>
+                <button>
+                    <svg class="icon-lg" viewBox="0 0 16 16"><path d="M0 4.75A3.75 3.75 0 013.75 1h8.5A3.75 3.75 0 0116 4.75v5.5A3.75 3.75 0 0112.25 14h-8.5A3.75 3.75 0 010 10.25v-5.5zm10.644 5.817a.75.75 0 01-.213 1.04 5.61 5.61 0 01-6.862 0 .75.75 0 11.852-1.234 4.11 4.11 0 004.158 0 .75.75 0 011.065.194zM5.5 6.5a1 1 0 11-2 0 1 1 0 012 0zm5 1a1 1 0 100-2 1 1 0 000 2z"/></svg>
+                </button>
+            </div>
+            <div class="progress-bar-container">
+                <span>0:00</span>
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+                <span>4:18</span>
+            </div>
+        </div>
+
+        <div class="player-right">
+            <button style="background:transparent; border:none; color:#a7a7a7; cursor:pointer;">
+                 <svg class="icon" viewBox="0 0 16 16"><path d="M15.25 8a.75.75 0 01-.75.75H8.75v5.75a.75.75 0 01-1.5 0V8.75H1.5a.75.75 0 010-1.5h5.75V1.5a.75.75 0 011.5 0v5.75h5.75a.75.75 0 01.75.75z"/></svg>
+            </button>
+            <button style="background:transparent; border:none; color:#a7a7a7; cursor:pointer;">
+                 <svg class="icon" viewBox="0 0 16 16"><path d="M2 2a1 1 0 011-1h10a1 1 0 011 1v12a1 1 0 01-1 1H3a1 1 0 01-1-1V2zm2 1v10h8V3H4z"/></svg>
+            </button>
+            <button style="background:transparent; border:none; color:#a7a7a7; cursor:pointer;">
+                 <svg class="icon" viewBox="0 0 16 16"><path d="M9.741.85a.75.75 0 01.375.65v13a.75.75 0 01-1.125.65l-6.925-4a3.642 3.642 0 01-1.33-4.967 3.639 3.639 0 011.33-1.33l6.925-4a.75.75 0 01.75 0zM8.25 3.042L2.75 6.22a2.14 2.14 0 000 3.56l5.5 3.178V3.042zM11.5 4.5v7a.75.75 0 001.5 0v-7a.75.75 0 00-1.5 0zm3-1v9a.75.75 0 001.5 0v-9a.75.75 0 00-1.5 0z"/></svg>
+            </button>
+            <div class="volume-bar">
+                <div class="volume-fill"></div>
+            </div>
+            <button style="background:transparent; border:none; color:#a7a7a7; cursor:pointer;">⤢</button>
+        </div>
+    </footer>
+</body>
+</html>
